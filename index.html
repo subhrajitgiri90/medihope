@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediHope — Medical Campaign Fund Raising</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <div class="brand"><span>❤</span> MediHope</div>
+    <nav>
+      <button class="active" data-page="dashboard">Dashboard</button>
+      <button data-page="campaigns">Campaigns</button>
+      <button data-page="donate">Donate</button>
+      <button data-page="transactions">Transactions</button>
+      <button data-page="admin">Admin</button>
+      <button data-page="about">About</button>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+<section id="dashboard" class="page active">
+  <div class="hero">
+    <div>
+      <span class="tag">MEDICAL FUNDRAISING PLATFORM</span>
+      <h1>Help patients get the <em>care they need.</em></h1>
+      <p>MediHope is a student project demonstrating how medical fundraising campaigns can be created, monitored, and managed through one simple dashboard.</p>
+      <button class="btn primary" onclick="showPage('campaigns')">Explore Campaigns</button>
+      <button class="btn light" onclick="showPage('donate')">Donate Now</button>
+    </div>
+    <div class="hero-stat"><span class="muted">Funds Raised</span><b id="heroRaised">₹0</b><span class="muted">across active campaigns</span></div>
+  </div>
+
+  <div class="grid cards">
+    <div class="card metric"><div class="label">Total Raised</div><div class="value" id="mRaised">₹0</div><div class="trend">↑ Live demo data</div></div>
+    <div class="card metric"><div class="label">Active Campaigns</div><div class="value" id="mCampaigns">0</div><div class="trend">Campaigns accepting support</div></div>
+    <div class="card metric"><div class="label">Donors</div><div class="value" id="mDonors">0</div><div class="trend">Unique demo donors</div></div>
+    <div class="card metric"><div class="label">Successful Donations</div><div class="value" id="mDonations">0</div><div class="trend">Completed demo payments</div></div>
+  </div>
+
+  <div class="grid two">
+    <div class="card">
+      <div class="section-title"><h2>Donation Trend</h2><span class="small muted">Demo analytics</span></div>
+      <div id="chart" class="chart"></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><h2>How the system works</h2></div>
+      <ol class="muted" style="line-height:1.9">
+        <li>Admin creates and verifies a medical campaign.</li>
+        <li>Donor selects a campaign and enters donation details.</li>
+        <li>The system creates a demo transaction.</li>
+        <li>Dashboard updates campaign and donor statistics.</li>
+        <li>Admin can review the transaction history.</li>
+      </ol>
+      <div class="alert">Demo only: no real money is processed and full card numbers are never stored.</div>
+    </div>
+  </div>
+</section>
+
+<section id="campaigns" class="page">
+  <div class="section-title"><h2>Medical Campaigns</h2><button class="btn primary" onclick="openCampaignModal()">+ Create Campaign</button></div>
+  <div class="search"><input id="campaignSearch" placeholder="Search campaign..." oninput="renderCampaigns()"><select id="categoryFilter" onchange="renderCampaigns()"><option value="">All categories</option><option>Emergency</option><option>Surgery</option><option>Treatment</option><option>Child Care</option></select></div>
+  <div id="campaignGrid" class="grid campaign-grid"></div>
+</section>
+
+<section id="donate" class="page">
+  <div class="grid two">
+    <div class="card">
+      <div class="section-title"><h2>Make a Donation</h2></div>
+      <form id="donationForm">
+        <label>Choose Campaign<select id="donCampaign" required></select></label>
+        <div class="row2"><label>Donor Name<input id="donorName" required placeholder="e.g. Rahul Sharma"></label>
+        <label>Email<input id="donorEmail" type="email" required placeholder="demo@example.com"></label></div>
+        <label>Donation Amount (₹)<input id="donAmount" type="number" min="1" required placeholder="500" oninput="updateQR()"></label>
+        <div class="chips"><button type="button" class="chip" onclick="setAmt(500)">₹500</button><button type="button" class="chip" onclick="setAmt(1000)">₹1,000</button><button type="button" class="chip" onclick="setAmt(5000)">₹5,000</button><button type="button" class="chip" onclick="setAmt(10000)">₹10,000</button></div>
+        <label>Payment Method</label>
+        <div class="tabs" id="payTabs"><button type="button" class="on" data-m="upi">📱 UPI / QR</button><button type="button" data-m="card">💳 Card</button><button type="button" data-m="bank">🏦 Bank</button></div>
+        <div class="pay on" id="pay-upi"><div class="qrbox"><div id="qr"></div><div><b>Scan &amp; pay with any UPI app</b><p class="small muted">GPay, PhonePe, Paytm, BHIM<br>QR updates with the amount.</p><div class="kv"><span>UPI ID</span><b id="upiId"></b><button type="button" class="copy" onclick="copyText(CFG.upi)">Copy</button></div></div></div></div>
+        <div class="pay" id="pay-card">
+          <div class="creditcard"><div>💳 <b>MediHope Pay</b></div><div class="num" id="pvNum">•••• •••• •••• ••••</div><div class="row"><span id="pvName">Card Holder</span><span id="pvExp">MM/YY</span></div></div>
+          <label>Name on Card<input id="cardName" autocomplete="off" placeholder="RAHUL SHARMA"></label>
+          <label>Card Number<input id="cardNum" inputmode="numeric" autocomplete="off" maxlength="19" placeholder="4111 1111 1111 1111"></label>
+          <div class="row2"><label>Expiry<input id="cardExp" inputmode="numeric" maxlength="5" placeholder="MM/YY"></label><label>CVV<input id="cardCvv" type="password" inputmode="numeric" maxlength="4" placeholder="•••"></label></div>
+          <div class="small muted">🔒 Demo: card is checked in your browser only; just the last 4 digits are kept in the receipt.</div>
+        </div>
+        <div class="pay" id="pay-bank">
+          <div class="card" style="padding:8px 18px;background:#fff">
+            <div class="kv"><span>Account Name</span><b id="bkName"></b></div><div class="kv"><span>Bank</span><b id="bkBank"></b></div>
+            <div class="kv"><span>Account No.</span><b id="bkAcc"></b><button type="button" class="copy" onclick="copyText(CFG.acc)">Copy</button></div>
+            <div class="kv"><span>IFSC</span><b id="bkIfsc"></b><button type="button" class="copy" onclick="copyText(CFG.ifsc)">Copy</button></div>
+            <div class="kv"><span>Branch</span><b id="bkBranch"></b></div>
+          </div>
+          <label>UTR / Reference No. (after transfer)<input id="bankRef" placeholder="e.g. 412345678901"></label>
+        </div>
+        <label>Message (optional)<textarea id="donMessage" rows="2" placeholder="Best wishes..."></textarea></label>
+        <div class="alert">Academic project: the bank/UPI details above are sample placeholders. Replace them in the <code>CFG</code> object before real use.</div>
+        <button class="btn secondary" type="button" onclick="submitDonation()">Complete Donation</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Donation Process</h2>
+      <div style="line-height:2;color:#475569">
+        <p>① Select campaign</p><p>② Enter donor information</p><p>③ Choose demo payment method</p><p>④ Validate donation</p><p>⑤ Create transaction ID</p><p>⑥ Update campaign total</p><p>⑦ Show receipt</p>
+      </div>
+      <div class="alert">Suggested viva point: the frontend handles forms and dashboard UI, while the backend would normally validate, store, and process transactions securely.</div>
+    </div>
+  </div>
+</section>
+
+<section id="transactions" class="page">
+  <div class="section-title"><h2>Transaction History</h2><button class="btn light" onclick="exportCSV()">Export CSV</button></div>
+  <div class="card table-wrap">
+    <table><thead><tr><th>Transaction ID</th><th>Donor</th><th>Campaign</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th></tr></thead><tbody id="transactionBody"></tbody></table>
+  </div>
+</section>
+
+<section id="admin" class="page">
+  <div class="section-title"><h2>Admin Control Panel</h2><span class="tag">PROJECT DEMO</span></div>
+  <div class="grid three">
+    <div class="card"><b>Campaign Management</b><p class="muted">Create, review and monitor campaigns.</p><button class="btn primary" onclick="openCampaignModal()">Create Campaign</button></div>
+    <div class="card"><b>Donation Monitoring</b><p class="muted">Review completed demo transactions.</p><button class="btn light" onclick="showPage('transactions')">View Transactions</button></div>
+    <div class="card"><b>Data Storage</b><p class="muted">This single-file prototype uses browser localStorage.</p><button class="btn danger" onclick="resetDemo()">Reset Demo</button></div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <h3>Recommended Real Backend</h3>
+    <p class="muted">For deployment, replace localStorage with a secure server such as Node.js + Express and a database such as MySQL/PostgreSQL. Authentication, authorization, validation, audit logs, encryption, and a certified payment provider should be added before handling real donations.</p>
+  </div>
+</section>
+
+<section id="about" class="page">
+  <div class="card">
+    <h2>About the Project</h2>
+    <p class="muted" style="line-height:1.8">MediHope demonstrates a complete workflow for a medical campaign fundraising platform. The project includes campaign management, donor registration, demo payment processing, transaction records, dashboard analytics, and admin controls.</p>
+    <h3>Project Modules</h3>
+    <div class="grid three">
+      <div class="card"><b>Frontend</b><p class="muted">HTML, CSS and JavaScript dashboard, forms, campaign cards, charts and responsive UI.</p></div>
+      <div class="card"><b>Backend Concept</b><p class="muted">API layer, validation, authentication, campaign service, donation service and database.</p></div>
+      <div class="card"><b>Database</b><p class="muted">Users, campaigns, donations, transactions and audit records.</p></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <b>MediHope</b> — Medical Campaign Fund Raising Management System<br>
+  <span class="small">Academic demonstration project • Demo payments only • No real financial transactions</span>
+</footer>
+
+<div id="campaignModal" class="modal"><div class="modal-box">
+  <div class="modal-head"><h2>Create Medical Campaign</h2><button class="close" onclick="closeModal()">✕</button></div>
+  <form id="campaignForm">
+    <label>Patient / Campaign Name<input id="cName" required placeholder="e.g. Help Aarav's Surgery"></label>
+    <label>Category<select id="cCategory"><option>Emergency</option><option>Surgery</option><option>Treatment</option><option>Child Care</option></select></label>
+    <label>Target Amount (₹)<input id="cTarget" type="number" min="1" required placeholder="100000"></label>
+    <label>Location<input id="cLocation" required placeholder="Bhubaneswar, Odisha"></label>
+    <label>Short Description<textarea id="cDesc" required rows="3"></textarea></label>
+    <button type="button" class="btn primary" onclick="submitCampaign()">Create Demo Campaign</button>
+  </form>
+</div></div>
+
+<div id="receiptModal" class="modal"><div class="modal-box" id="receiptBox"></div></div>
+<div id="toast" class="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
